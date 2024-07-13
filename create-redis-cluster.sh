@@ -22,6 +22,25 @@ NODE_IP_PORTS=${PASSWORD:-$DEFAULT_NODE_IP_PORTS}
 # 将 IP:PORT 转换为数组
 IFS=',' read -r -a NODE_ARRAY <<< "$(echo $NODE_IP_PORTS | tr -d ' ')"
 
+check_rediscli_version() {
+  REDISCLI_VERSION=$($REDISCLI --version | awk '/redis-cli/ {print $2}')
+  REQUIRED_VERSION="5.0.0"
+  if [ "$(printf '%s\n' "$REQUIRED_VERSION" "$REDISCLI_VERSION" | sort -V | head -n1)" = "$REQUIRED_VERSION" ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+recheck_rediscli_version() {
+  while ! check_rediscli_version; do
+    echo "错误: redis-cli 版本必须 >= 5.0.0"
+    read -p "请重新输入 redis-cli 路径: " REDISCLI
+  done
+}
+
+recheck_rediscli_version
+
 # 检查端口是否被占用
 check_port_availability() {
   local node_ip=$1
