@@ -11,6 +11,14 @@ REDISCLI=$REDISDIR/bin/redis-cli
 # Redis 集群密码
 PASSWORD=123456
 
+# 检查端口号占用
+for PORT in $(seq $START_PORT $END_PORT); do
+  if ss -tuln | grep ":$PORT "; then
+    echo "端口 $PORT 已被占用，创建 Redis 集群失败"
+    exit 1
+  fi
+done
+
 # 关闭所有 Redis 实例
 stop_all_redis() {
   for PORT in $(seq $START_PORT $END_PORT); do
@@ -91,14 +99,6 @@ requirepass 123456
 EOF
 done
 
-# 检查端口号占用
-for PORT in $(seq $START_PORT $END_PORT); do
-  if ss -tuln | grep ":$PORT "; then
-    echo "端口 $PORT 已被占用，创建 Redis 集群失败"
-    exit 1
-  fi
-done
-
 # 启动 Redis 实例
 for PORT in $(seq $START_PORT $END_PORT); do
   $REDISDIR/bin/redis-server $CLUSTERDIR/$PORT/redis.conf &
@@ -121,7 +121,7 @@ done
 # 构建节点列表
 NODE_LIST=""
 for PORT in $(seq $START_PORT $END_PORT); do
-  NODE_LIST="$NODE_LIST 127.0.0.1:$PORT"
+  NODE_LIST="$NODE_LIST 127.0.0.1: $PORT"
 done
 
 # 创建 Redis 集群
