@@ -35,7 +35,7 @@ check_rediscli_version() {
 recheck_rediscli_version() {
   while ! check_rediscli_version; do
     echo "错误: redis-cli 版本必须 >= 5.0.0"
-    read -p "请重新输入 redis-cli 路径: " REDISCLI
+    read -p "请重新输入 redis-cli 路径 (如: /root/redis-6.0.17/bin/redis-cli): " REDISCLI
   done
 }
 
