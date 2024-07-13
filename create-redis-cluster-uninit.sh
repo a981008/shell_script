@@ -1,27 +1,29 @@
 #!/bin/bash
-REDISDIR=/root/redis-3.2.1
+REDISDIR=/root/redis-6.0.17
 # 端口号
-START_PORT=7000
-END_PORT=7005
+START_PORT=8000
+END_PORT=8005
 # 创建 Redis 配置目录
 CLUSTERDIR=$REDISDIR/redis-cluster
 mkdir -p $CLUSTERDIR
-# 创建 Redis 集群，需要 redis-cli version >= 5
-REDISCLI=/root/redis-6.0.17/bin/redis-cli
+REDISCLI=$REDISDIR/bin/redis-cli
+# Redis 集群密码
+PASSWORD=123456
 
 # 创建 Redis 实例的配置文件
 for PORT in $(seq $START_PORT $END_PORT); do
   mkdir -p $CLUSTERDIR/$PORT
   cat << EOF > $CLUSTERDIR/$PORT/redis.conf
 port $PORT
-cluster-enabled yes
-cluster-config-file nodes.conf
-cluster-node-timeout 5000
 appendonly yes
 dbfilename dump.rdb
 dir $CLUSTERDIR/$PORT
 logfile $CLUSTERDIR/$PORT/redis.log
 protected-mode no
+requirepass 123456
+cluster-enabled yes
+cluster-config-file nodes.conf
+cluster-node-timeout 5000
 EOF
 done
 
@@ -35,15 +37,15 @@ done
 
 # 启动 Redis 实例
 for PORT in $(seq $START_PORT $END_PORT); do
-  redis-server $CLUSTERDIR/$PORT/redis.conf &
+  $REDISDIR/bin/redis-server $CLUSTERDIR/$PORT/redis.conf &
 done
 
 # 等待实例启动
-sleep 5
+sleep 1
 
 # 检查 Redis 实例是否成功启动
 for PORT in $(seq $START_PORT $END_PORT); do
-  if redis-cli -p $PORT ping | grep -q PONG; then
+  if $REDISCLI -p $PORT -a $PASSWORD ping | grep -q PONG; then
     echo "端口为 $PORT 的 Redis 实例启动成功。"
   else
     echo "端口为 $PORT 的 Redis 实例启动失败。"
@@ -51,7 +53,7 @@ for PORT in $(seq $START_PORT $END_PORT); do
     # 关闭所有 Redis 实例
     for PORT in $(seq $START_PORT $END_PORT); do
       echo "正在关闭 Redis 实例，端口: $PORT"
-      redis-cli -p $PORT shutdown
+      $REDISCLI -p $PORT -a $PASSWORD shutdown
       if [ $? -eq 0 ]; then
         echo "Redis 实例 $PORT 已成功关闭。"
       else
@@ -62,24 +64,3 @@ for PORT in $(seq $START_PORT $END_PORT); do
     exit 1
   fi
 done
-
-# 构建节点列表
-NODE_LIST=""
-for PORT in $(seq $START_PORT $END_PORT); do
-  NODE_LIST="$NODE_LIST 127.0.0.1:$PORT"
-done
-
-# 创建 Redis 集群，需要 redis-cli version >= 5
-yes "yes" | $REDISCLI --cluster create $NODE_LIST --cluster-replicas 1
-
-# 等待初始化完成
-sleep 1
-
-# 检查集群整体信息
-redis-cli -p $START_PORT cluster info | grep 'cluster_state:ok'
-if [ $? -eq 0 ]; then
-  echo "Redis 集群已成功创建！"
-else
-  echo "Redis 集群创建失败，请检查日志和配置。"
-  exit 1
-fi
