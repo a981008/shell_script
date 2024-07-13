@@ -13,7 +13,7 @@ echo "[创建 Redis 集群]"
 read -p "请输入 Redis 安装目录 (默认: $DEFAULT_REDISDIR): " REDISDIR
 REDISDIR=${REDISDIR:-$DEFAULT_REDISDIR}
 read -p "请输入 Redis 存放数据目录 (默认: $DEFAULT_CLUSTERDIR)，用以存放 Redis 持久化数据、日志以及配置文件: " CLUSTERDIR
-CLUSTERDIR=${CLUSTERDIR:-DEFAULT_CLUSTERDIR}
+CLUSTERDIR=${CLUSTERDIR:-$DEFAULT_CLUSTERDIR}
 read -p "请输入 Redis 密码 (默认: 无密码): " PASSWORD
 PASSWORD=${PASSWORD:-$DEFAULT_PASSWORD}
 read -p "请输入 Redis 节点 IP:PORT 列表 (以逗号分隔，格式: IP:PORT。默认为: $DEFAULT_NODE_IP_PORTS): " NODE_IP_PORTS
@@ -133,6 +133,25 @@ for node in "${NODE_ARRAY[@]}"; do
   NODE_LIST="$NODE_LIST $node_ip:$node_port"
 done
 
+# 同步机制：创建标志文件并检查是否所有节点都已完成该步骤
+create_flag() {
+  local node_ip=$1
+  local step=$2
+  ssh "$node_ip" "touch /tmp/${step}_completed"
+}
+
+check_all_flags() {
+  local step=$1
+  for node in "${NODE_ARRAY[@]}"; do
+    IFS=':' read -r -a node_parts <<<"$node"
+    node_ip=${node_parts[0]}
+    while ! ssh "$node_ip" "[ -f /tmp/${step}_completed ]"; do
+      echo "等待节点 $node_ip 完成步骤 $step..."
+      sleep 0.5
+    done
+  done
+}
+
 # 初始化集群
 initialize_cluster() {
   for node in "${NODE_ARRAY[@]}"; do
@@ -140,12 +159,31 @@ initialize_cluster() {
     node_ip=${node_parts[0]}
     node_port=${node_parts[1]}
     check_port_availability $node_ip $node_port
+    create_flag $node_ip "check_port_availability"
+  done
+  check_all_flags "check_port_availability"
+
+  for node in "${NODE_ARRAY[@]}"; do
+    IFS=':' read -r -a node_parts <<<"$node"
+    node_ip=${node_parts[0]}
+    node_port=${node_parts[1]}
     create_cluster_dir $node_ip $node_port
     create_redis_conf $node_ip $node_port
     start_redis_instance $node_ip $node_port
-    sleep 1
-    check_redis_instance $node_ip $node_port
+    create_flag $node_ip "start_redis_instance"
   done
+  check_all_flags "start_redis_instance"
+
+  sleep 1
+
+  for node in "${NODE_ARRAY[@]}"; do
+    IFS=':' read -r -a node_parts <<<"$node"
+    node_ip=${node_parts[0]}
+    node_port=${node_parts[1]}
+    check_redis_instance $node_ip $node_port
+    create_flag $node_ip "check_redis_instance"
+  done
+  check_all_flags "check_redis_instance"
 }
 
 # 创建 Redis 集群
