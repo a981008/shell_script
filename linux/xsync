@@ -24,5 +24,5 @@ user=$(whoami)
 # 循环，分发到 node01 ~ node03
 for ((i = 1; i <= 3; i++)); do
   echo ------------------- node0$i --------------
-  rsync -rvl $pdir/$fname $user@node0$i:$pdir
+  rsync -rvl $pdir/$fname $user@node0$i:$pdir &
 done
