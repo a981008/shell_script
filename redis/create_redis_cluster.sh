@@ -171,8 +171,8 @@ check_all_flags() {
   done
 }
 
-# 初始化集群
-initialize_cluster() {
+# 创建 Redis 实例
+create_redis_instance() {
   for node in "${NODE_ARRAY[@]}"; do
     IFS=':' read -r -a node_parts <<<"$node"
     node_ip=${node_parts[0]}
@@ -207,7 +207,7 @@ initialize_cluster() {
 
 # 创建 Redis 集群
 create_redis_cluster() {
-  echo "初始化 Redis 集群。"
+  echo "创建 Redis 集群。"
   if [ -n "$PASSWORD" ]; then
     yes "yes" | $REDISCLI -a "$PASSWORD" --no-auth-warning --cluster create $NODE_LIST --cluster-replicas 1
   else
@@ -216,10 +216,10 @@ create_redis_cluster() {
 }
 
 # 执行集群初始化和创建
-initialize_cluster
+create_redis_instance
 create_redis_cluster
 
-# 等待初始化完成
+# 等待集群创建完成
 sleep 3
 
 # 检查集群整体信息
