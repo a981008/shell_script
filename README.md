@@ -1,6 +1,7 @@
 # Redis
 * [create_redis_cluser](redis/create_redis_cluster.sh)：搭建 Redis 集群
 * [stop_redis](redis/stop_redis.sh)：批量关闭 Redis 实例
+* [start_redis](redis/start_redis.sh)：批量开启 Redis 实例
 # Linux
 * [xsync](linux/xsync.sh)：将文件分发至所有主机
 * [xcall](linux/xcall.sh)：在所有主机上执行命令

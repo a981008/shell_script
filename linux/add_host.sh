@@ -24,6 +24,6 @@ if grep -q "$IP" /etc/hosts; then
     fi
 else
     # 将新的 IP 地址和主机名追加到 /etc/hosts
-    echo "$IP\t$HOSTNAME" >> /etc/hosts
+    printf "$IP\t$HOSTNAME\n" >> /etc/hosts
     echo "追加新的 $IP 和 $HOSTNAME 条目。"
 fi

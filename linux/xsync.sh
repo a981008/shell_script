@@ -1,4 +1,12 @@
 #!/bin/bash
+HOSTS=(
+  "root@k8s-master"
+  "root@k8s-node01"
+  "root@k8s-node02"
+  "root@k8s-node03"
+  "root@k8s-register"
+)
+
 # 获取输入参数个数，如果没有参数，直接退出
 pcount=$#
 if ((pcount == 0)); then
@@ -18,11 +26,11 @@ pdir=$(
 )
 echo pdir=$pdir
 
-# 获取当前用户名称
-user=$(whoami)
-
-# 循环，分发到 node01 ~ node03
-for ((i = 1; i <= 3; i++)); do
-  echo ------------------- node0$i --------------
-  rsync -rvl $pdir/$fname $user@node0$i:$pdir &
+# 循环分发
+for host in "${HOSTS[@]}"; do
+  rsync -rvl $pdir/$fname $host:$pdir &
 done
+
+wait
+
+echo --------------- complete ---------------

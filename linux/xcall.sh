@@ -1,16 +1,23 @@
 #!/bin/bash
 
+HOSTS=(
+  "root@k8s-master"
+  "root@k8s-node01"
+  "root@k8s-node02"
+  "root@k8s-node03"
+  "root@k8s-register"
+)
+
+
 pcount=$#
 if ((pcount == 0)); then
   echo "command can not be null !"
   exit
 fi
 
-user=$(whoami)
-
-for ((i = 1; i <= 3; i++)); do
-  echo ---------------- node0$i ----------------
-  ssh $user@node0$i 'source /etc/profile;'$*
+for host in "${HOSTS[@]}"; do
+  echo ---------------- $host ----------------
+  ssh $host 'source /etc/profile;'$*
 done
 
 echo --------------- complete ---------------

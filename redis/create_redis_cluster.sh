@@ -112,7 +112,7 @@ daemonize yes
 EOF
   # 如果设置了密码，则添加 requirepass 和 masterauth
   if [ -n "$PASSWORD" ]; then
-    ssh "$node_ip" "echo 'requirepass $PASSWORD' >> $CLUSTERDIR/$node_port/redis.conf"
+      ssh "$node_ip" "echo 'requirepass $PASSWORD' >> $CLUSTERDIR/$node_port/redis.conf"
     ssh "$node_ip" "echo 'masterauth $PASSWORD' >> $CLUSTERDIR/$node_port/redis.conf"
   fi
 }
@@ -134,7 +134,7 @@ check_redis_instance() {
     PING_CMD="$REDISCLI -h $node_ip -p $node_port ping"
   fi
 
-  if ssh "$node_ip" "$PING_CMD" | grep -q PONG; then
+  if $PING_CMD | grep -q PONG; then
     echo "节点 $node_ip 端口为 $node_port 的 Redis 实例启动成功。"
   else
     echo "节点 $node_ip 端口为 $node_port 的 Redis 实例启动失败。"
@@ -193,8 +193,6 @@ create_redis_instance() {
   done
   check_all_flags "start_redis_instance"
 
-  sleep 1
-
   for node in "${NODE_ARRAY[@]}"; do
     IFS=':' read -r -a node_parts <<<"$node"
     node_ip=${node_parts[0]}
@@ -219,8 +217,8 @@ create_redis_cluster() {
 create_redis_instance
 create_redis_cluster
 
-# 等待集群创建完成
-sleep 3
+# 等待集群初始化完成
+sleep 1
 
 # 检查集群整体信息
 IFS=':' read -r -a node_parts <<<"${NODE_ARRAY[0]}"
