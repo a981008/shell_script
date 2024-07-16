@@ -13,14 +13,20 @@ read -p "请输入 Redis 密码 (默认: 无密码): " PASSWORD
 PASSWORD=${PASSWORD:-$DEFAULT_PASSWORD}
 read -p "请输入 Redis 节点 IP:PORT 列表 (以逗号分隔，格式: IP:PORT。默认为: $DEFAULT_NODE_IP_PORTS): " NODE_IP_PORTS
 NODE_IP_PORTS=${NODE_IP_PORTS:-$DEFAULT_NODE_IP_PORTS}
-IFS=',' read -r -a NODE_ARRAY <<< "$(echo $NODE_IP_PORTS | tr -d ' ')"
+IFS=',' read -r -a NODE_ARRAY <<<"$(echo $NODE_IP_PORTS | tr -d ' ')"
 
 # 关闭所有 Redis 实例
 for node in "${NODE_ARRAY[@]}"; do
   IFS=':' read -r -a node_parts <<<"$node"
   node_ip=${node_parts[0]}
   node_port=${node_parts[1]}
-  $REDISDIR/bin/redis-cli -h $node_ip -p $node_port -a $PASSWORD --no-auth-warning shutdown
+  if [ -n "$PASSWORD" ]; then
+    $REDISDIR/bin/redis-cli -h $node_ip -p $node_port -a $PASSWORD --no-auth-warning shutdown
+  else
+    $REDISDIR/bin/redis-cli -h $node_ip -p $node_port shutdown
+
+  fi
+
   if [ $? -eq 0 ]; then
     echo "关闭 Redis 实例 $node 成功。"
   else
