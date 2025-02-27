@@ -1,27 +1,29 @@
 #!/bin/bash
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# 下载后目录结构如下：
-#/opt/k8s_package
-#├── cri-dockerd-0.3.16.amd64.tgz
-#├── docker-28.0.1.tgz
-#├── etcd-v3.5.18-linux-amd64.tar.gz
-#├── images
-#│    ├── flannel
-#│    │    ├── flannel-cni-plugin:v1.6.2-flannel1.tar
-#│    │    └── flannel:v0.26.4.tar
-#│    └── registry.k8s.io
-#│          ├── registry.k8s.io_coredns_coredns:v1.11.3.tar
-#│          ├── registry.k8s.io_etcd:3.5.16-0.tar
-#│          ├── registry.k8s.io_kube-apiserver:v1.32.2.tar
-#│          ├── registry.k8s.io_kube-controller-manager:v1.32.2.tar
-#│          ├── registry.k8s.io_kube-proxy:v1.32.2.tar
-#│          ├── registry.k8s.io_kube-scheduler:v1.32.2.tar
-#│          └── registry.k8s.io_pause:3.10.tar
-#├── kube-flannel.yml
-#├── kubeadm
-#├── kubectl
-#└── kubelet
+# 执行完脚本后，目录结构如下：
+#/opt
+#├── k8s_package
+#│    ├── cri-dockerd-0.3.16.amd64.tgz
+#│    ├── docker-28.0.1.tgz
+#│    ├── etcd-v3.5.18-linux-amd64.tar.gz
+#│    ├── images
+#│    │    ├── flannel
+#│    │    │    ├── flannel-cni-plugin:v1.6.2-flannel1.tar
+#│    │    │    └── flannel:v0.26.4.tar
+#│    │    └── registry.k8s.io
+#│    │          ├── registry.k8s.io_coredns_coredns:v1.11.3.tar
+#│    │          ├── registry.k8s.io_etcd:3.5.16-0.tar
+#│    │          ├── registry.k8s.io_kube-apiserver:v1.32.2.tar
+#│    │          ├── registry.k8s.io_kube-controller-manager:v1.32.2.tar
+#│    │          ├── registry.k8s.io_kube-proxy:v1.32.2.tar
+#│    │          ├── registry.k8s.io_kube-scheduler:v1.32.2.tar
+#│    │          └── registry.k8s.io_pause:3.10.tar
+#│    ├── kube-flannel.yml
+#│    ├── kubeadm
+#│    ├── kubectl
+#│    └── kubelet
+#└── k8s_package.tar.gz
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 DOWNLOAD_DIR="/opt/k8s_package"
@@ -85,4 +87,5 @@ fi
 download_file "https://download.docker.com/${OS}/static/stable/${ARCH_DOCKER}/docker-${DOCKER_VERSION}.tgz" "${DOWNLOAD_DIR}"
 download_file "https://github.com/Mirantis/cri-dockerd/releases/download/v${CRI_DOCKERD_VERSION}/cri-dockerd-${CRI_DOCKERD_VERSION}.${ARCH}.tgz" "${DOWNLOAD_DIR}"
 
+tar -czvf "$DOWNLOAD_DIR.tar.gz" -C /opt k8s_package
 echo "All downloads and pulls completed successfully."

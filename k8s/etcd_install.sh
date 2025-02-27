@@ -6,9 +6,12 @@ CLUSTER_IPS=("192.168.53.103" "192.168.53.104" "192.168.53.105")
 
 # etcd 版本
 ETCD_VERSION="v3.5.18"
-ETCD_TARBALL="etcd-${ETCD_VERSION}-linux-amd64.tar.gz"
+OS=linux
+ARCH=amd64
+ETCD_TARBALL="etcd-${ETCD_VERSION}-${OS}-${ARCH}.tar.gz"
 ETCD_URL="https://github.com/etcd-io/etcd/releases/download/${ETCD_VERSION}/${ETCD_TARBALL}"
-ETCD_DIR="/tmp/etcd-${ETCD_VERSION}-linux-amd64"
+DOWNLOAD_DIR="/tmp"
+ETCD_DIR="${DOWNLOAD_DIR}/etcd-${ETCD_VERSION}-${OS}-${ARCH}"
 
 # etcd 相关配置
 export ETCDCTL_API=3
@@ -17,8 +20,8 @@ DATADIR="/home/etcd/data"
 
 # 1. 下载并解压 etcd
 echo "Downloading etcd..."
-wget -q -P /tmp "${ETCD_URL}"
-tar -zxf "/tmp/${ETCD_TARBALL}" -C /tmp
+wget -q -P "${DOWNLOAD_DIR}" "${ETCD_URL}"
+tar -zxf "${DOWNLOAD_DIR}/${ETCD_TARBALL}" -C "${DOWNLOAD_DIR}"
 
 # 2. 分发 etcd 二进制文件
 echo "Distributing etcd binaries..."
