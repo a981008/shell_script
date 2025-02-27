@@ -14,3 +14,4 @@
 * [auto_login.sh](linux/auto_login.sh)：自动登录主机。
 ## K8S
 * [install_etcd_cluster.sh](k8s/install_etcd_cluster.sh)：安装 etcd 集群。
+* [download.sh](k8s/download.sh)：下载离线安装需要的包。
