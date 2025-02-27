@@ -4,16 +4,18 @@
 CLUSTER_NAMES=("k8s-etcd01" "k8s-etcd02" "k8s-etcd03")
 CLUSTER_IPS=("192.168.53.103" "192.168.53.104" "192.168.53.105")
 
-# etcd 版本
-ETCD_VERSION="v3.5.18"
-ETCD_TARBALL="etcd-${ETCD_VERSION}-linux-amd64.tar.gz"
-ETCD_URL="https://github.com/etcd-io/etcd/releases/download/${ETCD_VERSION}/${ETCD_TARBALL}"
-ETCD_DIR="/tmp/etcd-${ETCD_VERSION}-linux-amd64"
-
 # etcd 相关配置
 export ETCDCTL_API=3
 CLUSTER_TOKEN="k8s-etcd-cluster"
 DATADIR="/home/etcd/data"
+
+# etcd 版本
+ETCD_VERSION="v3.5.18"
+OS=linux
+ARCH=amd64
+ETCD_TARBALL="etcd-${ETCD_VERSION}-${OS}-${ARCH}.tar.gz"
+ETCD_URL="https://github.com/etcd-io/etcd/releases/download/${ETCD_VERSION}/${ETCD_TARBALL}"
+ETCD_DIR="/tmp/etcd-${ETCD_VERSION}-${OS}-${ARCH}"
 
 # 1. 下载并解压 etcd
 echo "Downloading etcd..."
