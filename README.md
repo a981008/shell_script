@@ -9,7 +9,8 @@
 ## Linux
 * [xsync.sh](linux/xsync.sh)：将文件分发至所有主机。
 * [xcall.sh](linux/xcall.sh)：在所有主机上执行命令。
-* [batch_ssh_auth](linux/batch_ssh_auth.sh)：节点互相间认证。
+* [batch_ssh_auth.sh](linux/batch_ssh_auth.sh)：节点互相间认证。
 * [add_host.sh](linux/add_host.sh)：`/etc/hosts` 增加 IP 与域名映射。
 * [auto_login.sh](linux/auto_login.sh)：自动登录主机。
-
+## K8S
+* [install_etcd_cluster.sh](k8s/install_etcd_cluster.sh)：安装 etcd 集群。
