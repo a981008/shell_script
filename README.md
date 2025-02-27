@@ -15,3 +15,4 @@
 ## K8S
 * [install_etcd_cluster.sh](k8s/install_etcd_cluster.sh)：安装 etcd 集群。
 * [download.sh](k8s/download.sh)：下载离线安装需要的包。
+* [prepare_env.sh](k8s/prepare_env.sh)：准备集群环境。
