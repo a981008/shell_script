@@ -4,37 +4,51 @@
 # 执行完脚本后，目录结构如下：
 #/opt
 #├── k8s_package
-#│    ├── cri-dockerd-0.3.16.amd64.tgz
-#│    ├── docker-28.0.1.tgz
-#│    ├── etcd-v3.5.18-linux-amd64.tar.gz
-#│    ├── images
-#│    │    ├── flannel
-#│    │    │    ├── flannel-cni-plugin:v1.6.2-flannel1.tar
-#│    │    │    └── flannel:v0.26.4.tar
-#│    │    └── registry.k8s.io
-#│    │          ├── registry.k8s.io_coredns_coredns:v1.11.3.tar
-#│    │          ├── registry.k8s.io_etcd:3.5.16-0.tar
-#│    │          ├── registry.k8s.io_kube-apiserver:v1.32.2.tar
-#│    │          ├── registry.k8s.io_kube-controller-manager:v1.32.2.tar
-#│    │          ├── registry.k8s.io_kube-proxy:v1.32.2.tar
-#│    │          ├── registry.k8s.io_kube-scheduler:v1.32.2.tar
-#│    │          └── registry.k8s.io_pause:3.10.tar
-#│    ├── kube-flannel.yml
-#│    ├── kubeadm
-#│    ├── kubectl
-#│    └── kubelet
+#│   ├── bin
+#│   │   ├── containerd
+#│   │   ├── containerd-shim-runc-v2
+#│   │   ├── cri-dockerd
+#│   │   ├── ctr
+#│   │   ├── docker
+#│   │   ├── docker-init
+#│   │   ├── docker-proxy
+#│   │   ├── dockerd
+#│   │   ├── etcd
+#│   │   ├── etcdctl
+#│   │   ├── etcdutl
+#│   │   ├── kubeadm
+#│   │   ├── kubectl
+#│   │   ├── kubelet
+#│   │   └── runc
+#│   ├── images
+#│   │   ├── flannel
+#│   │   │   ├── flannel-cni-plugin:v1.6.2-flannel1.tar
+#│   │   │   └── flannel:v0.26.4.tar
+#│   │   └── registry.k8s.io
+#│   │       ├── registry.k8s.io_coredns_coredns:v1.11.3.tar
+#│   │       ├── registry.k8s.io_etcd:3.5.16-0.tar
+#│   │       ├── registry.k8s.io_kube-apiserver:v1.32.2.tar
+#│   │       ├── registry.k8s.io_kube-controller-manager:v1.32.2.tar
+#│   │       ├── registry.k8s.io_kube-proxy:v1.32.2.tar
+#│   │       ├── registry.k8s.io_kube-scheduler:v1.32.2.tar
+#│   │       └── registry.k8s.io_pause:3.10.tar
+#│   └── kube-flannel.yml
 #└── k8s_package.tar.gz
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 DOWNLOAD_DIR="/opt/k8s_package"
 OS="linux"
 ARCH="amd64"
+BIN_DIR="${DOWNLOAD_DIR}/bin"
+UNZIP_DIR="${DOWNLOAD_DIR}/unzip"
 
-ETCD_VERSION="v3.5.18"
+ETCD_VERSION="3.5.18"
 K8S_VERSION="1.32.0"
 FLANNEL_VERSION="0.26.4"
 DOCKER_VERSION="28.0.1"
 CRI_DOCKERD_VERSION="0.3.16"
+
+mkdir -p ${BIN_DIR} ${UNZIP_DIR}
 
 # Check if the directory exists, if not, create it
 mkdir -p "${DOWNLOAD_DIR}/images/registry.k8s.io" "${DOWNLOAD_DIR}/images/flannel"
@@ -52,18 +66,18 @@ download_file() {
 }
 
 # Download etcd
-ETCD_TARBALL="etcd-${ETCD_VERSION}-${OS}-${ARCH}.tar.gz"
-ETCD_URL="https://github.com/etcd-io/etcd/releases/download/${ETCD_VERSION}/${ETCD_TARBALL}"
+ETCD_TARBALL="etcd-v${ETCD_VERSION}-${OS}-${ARCH}.tar.gz"
+ETCD_URL="https://github.com/etcd-io/etcd/releases/download/v${ETCD_VERSION}/${ETCD_TARBALL}"
 download_file "${ETCD_URL}" "${DOWNLOAD_DIR}"
 
 # Download kubeadm, kubelet, kubectl
 for bin in kubeadm kubelet kubectl; do
-  download_file "https://dl.k8s.io/release/v${K8S_VERSION}/bin/${OS}/${ARCH}/${bin}" "${DOWNLOAD_DIR}"
-  chmod +x "${DOWNLOAD_DIR}/${bin}"
+  download_file "https://dl.k8s.io/release/v${K8S_VERSION}/bin/${OS}/${ARCH}/${bin}" "${BIN_DIR}"
+  chmod +x "${BIN_DIR}/${bin}"
 done
 
 # Download k8s images
-image_list=$("${DOWNLOAD_DIR}/kubeadm" config images list)
+image_list=$("${BIN_DIR}/kubeadm" config images list)
 for image in ${image_list}; do
   if [ -z "$image" ]; then
     continue
@@ -79,13 +93,18 @@ for image in $(grep image "${DOWNLOAD_DIR}/kube-flannel.yml" | grep -v '#' | awk
   docker pull "flannel/$image" && docker save -o "${DOWNLOAD_DIR}/images/flannel/$image.tar" "flannel/$image"
 done
 
-# Download Docker and cri-dockerd
+ Download Docker and cri-dockerd
 ARCH_DOCKER="${ARCH}"
 if [ "$ARCH" == "amd64" ]; then
   ARCH_DOCKER="x86_64"
 fi
 download_file "https://download.docker.com/${OS}/static/stable/${ARCH_DOCKER}/docker-${DOCKER_VERSION}.tgz" "${DOWNLOAD_DIR}"
 download_file "https://github.com/Mirantis/cri-dockerd/releases/download/v${CRI_DOCKERD_VERSION}/cri-dockerd-${CRI_DOCKERD_VERSION}.${ARCH}.tgz" "${DOWNLOAD_DIR}"
+
+# 解压 tar.gz/tgz 并移动可执行文件，删除源压缩文件
+find "${DOWNLOAD_DIR}" -maxdepth 1 -type f \( -name "*.tar.gz" -o -name "*.tgz" \) -print -exec tar -xzf {} -C "${UNZIP_DIR}" \; -exec rm -f {} \;
+find "${UNZIP_DIR}" -type f -executable -exec mv -f {} "${BIN_DIR}" \;
+rm -rf "${UNZIP_DIR}"
 
 tar -czvf "$DOWNLOAD_DIR.tar.gz" -C /opt k8s_package
 echo "All downloads and pulls completed successfully."
