@@ -16,3 +16,8 @@
 * [install_etcd_cluster.sh](k8s/install_etcd_cluster.sh)：安装 etcd 集群。
 * [download.sh](k8s/download.sh)：下载离线安装需要的包。
 * [prepare_env.sh](k8s/prepare_env.sh)：准备集群环境。
+* [install.sh](k8s/install.sh)：安装k8s集群。
+  * [install_docker.sh](k8s/install_docker.sh)：安装 docker。
+  * [install_cir_dockerd.sh](k8s/install_cri_dockerd.sh)：安装 cri-dockerd
+  * [push_images.sh](k8s/push_images.sh)：将离线包中的镜像上传到私有仓库。
+  * [pull_images.sh](k8s/pull_images.sh)：将私有仓库镜像拉取到本地。
