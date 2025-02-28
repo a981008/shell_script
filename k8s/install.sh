@@ -30,23 +30,23 @@ REGISTRY_PASSWORD="123456"
 
 # 上传镜像
 images_txt=${PACKAGE_DIR}/images.txt
-#sh push_images.sh "${REGISTRY_USERNAME}" "${REGISTRY_PASSWORD}" "${REGISTRY_URL}" "${IMAGE_PREFIX}" "${images_txt}" "${IMAGES_DIR}"
+sh push_images.sh "${REGISTRY_USERNAME}" "${REGISTRY_PASSWORD}" "${REGISTRY_URL}" "${IMAGE_PREFIX}" "${images_txt}" "${IMAGES_DIR}"
 
 for host in "${!MASTER_HOSTS[@]}"; do
   ip="${MASTER_HOSTS[$host]}"
-#  # 0. 内核参数
-#  ssh root@"$ip" "sh -s" < prepare_env.sh
-#
-#  # 1. 安装 docker
-#  echo "Installing Docker on ${host} (${ip})..."
-#  scp ${BIN_DIR}/docker root@"$ip":/usr/bin/
-#  ssh root@"$ip" "sh -s" < install_docker.sh "$REGISTRY_URL"
-#  echo "Docker installation completed on ${host} (${ip})"
-#
-#  # 2. 导入镜像
-#  echo "Importing docker images on ${host} (${ip})..."
-#  scp ${images_txt} root@"$ip":/tmp/images.txt
-#  ssh root@"$ip" "sh -s" < pull_images.sh "${REGISTRY_USERNAME}" "${REGISTRY_PASSWORD}" "${REGISTRY_URL}" "/tmp/images.txt"
+  # 0. 内核参数
+  ssh root@"$ip" "sh -s" < prepare_env.sh
+
+  # 1. 安装 docker
+  echo "Installing Docker on ${host} (${ip})..."
+  scp ${BIN_DIR}/docker root@"$ip":/usr/bin/
+  ssh root@"$ip" "sh -s" < install_docker.sh "$REGISTRY_URL"
+  echo "Docker installation completed on ${host} (${ip})"
+
+  # 2. 导入镜像
+  echo "Importing docker images on ${host} (${ip})..."
+  scp ${images_txt} root@"$ip":/tmp/images.txt
+  ssh root@"$ip" "sh -s" < pull_images.sh "${REGISTRY_USERNAME}" "${REGISTRY_PASSWORD}" "${REGISTRY_URL}" "/tmp/images.txt"
 
   # 3. 安装 cri-dockerd
   pause_image=$(cat /opt/demo/k8s_package/images.txt |grep pause)
@@ -56,10 +56,10 @@ for host in "${!MASTER_HOSTS[@]}"; do
   echo "cri-dockerd installation completed on ${host} (${ip})"
 
   # 4. 安装 kubeadm, kubelet, kubectl
-#  scp "${BIN_DIR}/kubeadm" root@"$ip":/usr/bin/
-#  scp "${BIN_DIR}/kubelet" root@"$ip":/usr/bin/
-#  scp "${BIN_DIR}/kubectl" root@"$ip":/usr/bin/
-#  echo "kubeadm, kubelet, kubectl installation completed on ${host} (${ip})"
+  scp "${BIN_DIR}/kubeadm" root@"$ip":/usr/bin/
+  scp "${BIN_DIR}/kubelet" root@"$ip":/usr/bin/
+  scp "${BIN_DIR}/kubectl" root@"$ip":/usr/bin/
+  echo "kubeadm, kubelet, kubectl installation completed on ${host} (${ip})"
 
 done
 echo "All Master nodes have Docker installed."
