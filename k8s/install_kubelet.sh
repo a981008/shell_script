@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -e
+
+cat > /etc/systemd/system/kubelet.service << EOF
+[Unit]
+Description=kubelet: The Kubernetes Node Agent
+Documentation=https://kubernetes.io/docs/
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/kubelet --container-runtime-endpoint=unix:///run/cri-dockerd.sock
+Restart=always
+StartLimitInterval=0
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable --now kubelet

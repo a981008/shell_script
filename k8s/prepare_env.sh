@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 echo "Disabling SELinux..."
 sed -i '/^SELINUX=/ c SELINUX=disabled' /etc/selinux/config
 setenforce 0
@@ -36,5 +34,10 @@ modprobe -- nf_conntrack
 EOF
 chmod +x /etc/sysconfig/modules/ipvs.modules
 /etc/sysconfig/modules/ipvs.modules
+
+# 关闭防火墙
+sudo systemctl stop firewalld
+sudo systemctl disable firewalld
+sudo systemctl mask firewalld
 
 echo "Environment preparation for Kubernetes completed."

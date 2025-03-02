@@ -16,6 +16,8 @@
 #│   │   ├── etcd
 #│   │   ├── etcdctl
 #│   │   ├── etcdutl
+#│   │   ├── haproxy
+#│   │   ├── keepalived
 #│   │   ├── kubeadm
 #│   │   ├── kubectl
 #│   │   ├── kubelet
@@ -35,6 +37,7 @@
 #│   └── kube-flannel.yml
 #└── k8s_package.tar.gz
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+set -e
 
 DOWNLOAD_DIR="/opt/k8s_package"
 OS="linux"
@@ -43,10 +46,12 @@ BIN_DIR="${DOWNLOAD_DIR}/bin"
 UNZIP_DIR="${DOWNLOAD_DIR}/unzip"
 
 ETCD_VERSION="3.5.18"
-K8S_VERSION="1.32.0"
+K8S_VERSION="1.32.2"
 FLANNEL_VERSION="0.26.4"
 DOCKER_VERSION="28.0.1"
 CRI_DOCKERD_VERSION="0.3.16"
+HAPROXY_VERSION="3.1.0"
+KEEPALIVED_VERSION="2.3.2"
 
 mkdir -p ${BIN_DIR} ${UNZIP_DIR}
 
@@ -59,10 +64,6 @@ download_file() {
   local output_dir=$2
   echo "Downloading ${url}..."
   wget -q --show-progress -P "${output_dir}" "${url}"
-  if [ $? -ne 0 ]; then
-    echo "Error downloading ${url}. Exiting."
-    exit 1
-  fi
 }
 
 # Download etcd
@@ -93,7 +94,7 @@ for image in $(grep image "${DOWNLOAD_DIR}/kube-flannel.yml" | grep -v '#' | awk
   docker pull "flannel/$image" && docker save -o "${DOWNLOAD_DIR}/images/flannel/$image.tar" "flannel/$image"
 done
 
- Download Docker and cri-dockerd
+# Download Docker and cri-dockerd
 ARCH_DOCKER="${ARCH}"
 if [ "$ARCH" == "amd64" ]; then
   ARCH_DOCKER="x86_64"
@@ -101,9 +102,28 @@ fi
 download_file "https://download.docker.com/${OS}/static/stable/${ARCH_DOCKER}/docker-${DOCKER_VERSION}.tgz" "${DOWNLOAD_DIR}"
 download_file "https://github.com/Mirantis/cri-dockerd/releases/download/v${CRI_DOCKERD_VERSION}/cri-dockerd-${CRI_DOCKERD_VERSION}.${ARCH}.tgz" "${DOWNLOAD_DIR}"
 
-# 解压 tar.gz/tgz 并移动可执行文件，删除源压缩文件
-find "${DOWNLOAD_DIR}" -maxdepth 1 -type f \( -name "*.tar.gz" -o -name "*.tgz" \) -print -exec tar -xzf {} -C "${UNZIP_DIR}" \; -exec rm -f {} \;
+# 解压 tar.gz/tgz 并移动可执行文件
+find "${DOWNLOAD_DIR}" -maxdepth 1 -type f \( -name "*.tar.gz" -o -name "*.tgz" \) -print -exec tar -xzf {} -C "${UNZIP_DIR}" \;
 find "${UNZIP_DIR}" -type f -executable -exec mv -f {} "${BIN_DIR}" \;
+
+# 编译 HAProxy
+yum install -y gcc make openssl-devel pcre-devel zlib-devel
+download_file "https://github.com/haproxy/haproxy/archive/refs/tags/v${HAPROXY_VERSION}.tar.gz" "${DOWNLOAD_DIR}"
+tar -xzf "${DOWNLOAD_DIR}/v${HAPROXY_VERSION}".tar.gz -C "${UNZIP_DIR}"
+cd "${UNZIP_DIR}/haproxy-${HAPROXY_VERSION}"
+make -j$(nproc) TARGET=linux-glibc
+cp "${UNZIP_DIR}/haproxy-${HAPROXY_VERSION}/haproxy" "${BIN_DIR}"
+
+# 编译 keepalived
+download_file "https://www.keepalived.org/software/keepalived-${KEEPALIVED_VERSION}.tar.gz" "${DOWNLOAD_DIR}"
+tar -xzf "${DOWNLOAD_DIR}/keepalived-${KEEPALIVED_VERSION}".tar.gz -C "${UNZIP_DIR}"
+cd "${UNZIP_DIR}/keepalived-${KEEPALIVED_VERSION}"
+./configure --with-openssl
+make -j$(nproc)
+cp "${UNZIP_DIR}/keepalived-${KEEPALIVED_VERSION}/bin/keepalived" "${BIN_DIR}"
+
+# 删除无用文件
+find "${DOWNLOAD_DIR}" -type f \( -name "*.tgz" -o -name "*.tar.gz" \) -delete
 rm -rf "${UNZIP_DIR}"
 
 tar -czvf "$DOWNLOAD_DIR.tar.gz" -C /opt k8s_package
